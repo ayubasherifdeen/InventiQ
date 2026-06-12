@@ -1,5 +1,16 @@
 # InventiQ — Inventory & Sales Management
 
+# Background
+Ibrahim Alhassan OTC is an OTC that does everything manually, from inventory management to sales processing. As an IT student and a part time employee here, i realized over the years how the reliance on manual processes tend to affect operations here.
+
+The reliance of manual process has made the tracking of inventory and sales inefficient. it has in addition, led to inaccuracies restocking, as well as led to reactive approach in tracking expiry and low stock
+
+# Statement
+realizing this, i started to gradually get interested in a an inventory management tool as i feel the frustration first hand, especially due to my perculiar role here of being in charge of restocking, managing expiry and reporting to the manager monthly.
+
+
+
+
 Full-stack Django application with multi-role auth, POS, AI-powered inventory intelligence, and analytics.
 
 ## Stack
@@ -9,30 +20,6 @@ Full-stack Django application with multi-role auth, POS, AI-powered inventory in
 - **Charts**: Chart.js (CDN)
 - **Database**: SQLite (default) — PostgreSQL ready
 
-## Quick start
-
-```bash
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-python manage.py makemigrations accounts inventory sales dashboard ai_engine
-python manage.py migrate
-python manage.py seed_data
-
-python manage.py runserver
-```
-
-Visit **http://localhost:8000**
-
-## Credentials
-
-| Role        | Username     | Password   |
-|-------------|--------------|------------|
-| Manager     | `admin`      | `admin123` |
-| Salesperson | `sarah_chen` | `sales123` |
-| Salesperson | `marcus_j`   | `sales123` |
-
-Django admin available at `/django-admin/` (log in as `admin`).
 
 ## Features
 
