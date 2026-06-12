@@ -1,0 +1,61 @@
+{% extends "layouts/base.html" %}
+{% block title %}Sales History{% endblock %}
+{% block page_title %}Sales History{% endblock %}
+{% block page_subtitle %}{% if user.is_manager %}All transactions{% else %}Your transactions{% endif %}{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+  <form method="get" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" aria-label="Filter sales by date">
+    <label for="date_from" style="font-size:12px;color:#9ca3af;font-family:'Inter',sans-serif;">From</label>
+    <input type="date" name="date_from" id="date_from" value="{{ date_from }}" class="field" style="width:145px;">
+    <label for="date_to" style="font-size:12px;color:#9ca3af;font-family:'Inter',sans-serif;">To</label>
+    <input type="date" name="date_to" id="date_to" value="{{ date_to }}" class="field" style="width:145px;">
+    <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+    {% if date_from or date_to %}<a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+  </form>
+  <a href="{% url 'sales:pos' %}" class="btn btn-primary btn-sm">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    New sale
+  </a>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="overflow-x:auto;">
+    <table class="tbl" aria-label="Sales transactions">
+      <thead><tr>
+        <th scope="col">Sale #</th>
+        {% if user.is_manager %}<th scope="col">Salesperson</th>{% endif %}
+        <th scope="col">Items</th>
+        <th scope="col">Date &amp; time</th>
+        <th scope="col" style="text-align:center;">Status</th>
+        <th scope="col" style="text-align:right;">Total</th>
+        <th scope="col" style="text-align:center;">Receipt</th>
+      </tr></thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td class="sid"><a href="{% url 'sales:sale_detail' sale.pk %}" style="color:#4F7CFF;text-decoration:none;">#{{ sale.pk|stringformat:"05d" }}</a></td>
+          {% if user.is_manager %}<td class="strong">{{ sale.salesperson.full_name|default:"—" }}</td>{% endif %}
+          <td>{{ sale.item_count }} item{{ sale.item_count|pluralize }}</td>
+          <td class="mn">{{ sale.created_at|date:"M j, Y · H:i" }}</td>
+          <td style="text-align:center;">{% if sale.status == 'completed' %}<span class="badge badge-green">Completed</span>{% else %}<span class="badge badge-red">Voided</span>{% endif %}</td>
+          <td class="money">${{ sale.total_amount|floatformat:2 }}</td>
+          <td style="text-align:center;">
+            <a href="{% url 'sales:sale_receipt' sale.pk %}" style="padding:5px;display:inline-flex;border-radius:6px;color:#9ca3af;transition:all .14s;" aria-label="Print receipt for sale #{{ sale.pk|stringformat:'05d' }}">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            </a>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No sales found.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if sales.has_other_pages %}
+  <nav style="padding:10px 14px;border-top:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;" aria-label="Pagination">
+    <p style="font-size:11.5px;color:#9ca3af;font-family:'Inter',sans-serif;">Page {{ sales.number }} of {{ sales.paginator.num_pages }}</p>
+    <div style="display:flex;gap:6px;">
+      {% if sales.has_previous %}<a href="?page={{ sales.previous_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">← Prev</a>{% endif %}
+      {% if sales.has_next %}<a href="?page={{ sales.next_page_number }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">Next →</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

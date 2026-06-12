@@ -1,0 +1,324 @@
+{% extends "layouts/base.html" %}
+{% block title %}Point of Sale{% endblock %}
+{% block page_title %}Point of Sale{% endblock %}
+{% block page_subtitle %}Process a new transaction{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:16px;">
+
+  <!-- Product grid -->
+  <div style="flex:1;min-width:0;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;position:relative;">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#9ca3af;pointer-events:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input id="posSearch" type="search" placeholder="Search by name or SKU…" class="field" style="padding-left:32px;" oninput="filterPOS()" aria-label="Search products" autocomplete="off">
+      </div>
+      <select id="catFilter" class="field" style="width:160px;" onchange="filterPOS()" aria-label="Filter by category">
+        <option value="">All categories</option>
+        {% for cat in categories %}{% if cat %}<option value="{{ cat }}">{{ cat }}</option>{% endif %}{% endfor %}
+      </select>
+    </div>
+
+    <div id="posGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" role="list" aria-label="Available products">
+      {% for product in products %}
+      <div class="pos-card"
+           data-id="{{ product.pk }}"
+           data-name="{{ product.name }}"
+           data-price="{{ product.selling_price }}"
+           data-stock="{{ product.stock_quantity }}"
+           data-sku="{{ product.sku }}"
+           data-cat="{{ product.category.name|default:'' }}"
+           onclick="addToCart(this)"
+           tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')addToCart(this)"
+           role="button"
+           aria-label="Add {{ product.name }} to cart — ${{ product.selling_price }}, {{ product.stock_quantity }} in stock"
+           style="background:#fff;border:1.5px solid #eaecf0;border-radius:10px;padding:12px;cursor:pointer;text-align:left;transition:border-color .14s,background .14s;user-select:none;">
+        <div style="width:28px;height:28px;background:#eff6ff;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;pointer-events:none;" aria-hidden="true">
+          <svg width="13" height="13" fill="none" stroke="#4F7CFF" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#111827;margin-bottom:2px;line-height:1.3;pointer-events:none;">{{ product.name }}</div>
+        <div style="font-family:ui-monospace,monospace;font-size:10px;color:#9ca3af;margin-bottom:4px;pointer-events:none;">{{ product.sku }}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;pointer-events:none;">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;color:#4F7CFF;">${{ product.selling_price }}</div>
+          <div style="font-size:10px;{% if product.is_low_stock %}color:#d97706;{% else %}color:#9ca3af;{% endif %}">{{ product.stock_quantity }} left</div>
+        </div>
+      </div>
+      {% empty %}
+      <p style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af;font-size:13px;">No products available</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Cart panel -->
+  <div style="width:264px;flex-shrink:0;">
+    <div class="card" style="padding:0;display:flex;flex-direction:column;position:sticky;top:70px;max-height:calc(100vh - 90px);">
+
+      <div style="padding:12px 14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#111827;">
+          <svg width="14" height="14" fill="none" stroke="#4F7CFF" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          Cart
+          <span id="cartCount" style="background:#eff6ff;color:#4F7CFF;font-size:10px;font-weight:800;padding:1px 7px;border-radius:4px;" aria-live="polite" aria-label="Items in cart">0</span>
+        </div>
+        <button onclick="clearCart()" style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;" aria-label="Clear all cart items">Clear</button>
+      </div>
+
+      <div id="cartItems" style="flex:1;overflow-y:auto;padding:8px 12px;min-height:120px;" role="list" aria-label="Cart items" aria-live="polite">
+        <p id="cartEmpty" style="font-family:'Inter',sans-serif;font-size:12px;color:#9ca3af;text-align:center;padding:24px 0;">No items yet</p>
+      </div>
+
+      <div style="padding:12px 14px;border-top:1px solid #f3f4f6;">
+        <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:11.5px;color:#9ca3af;margin-bottom:6px;">
+          <span>Subtotal</span>
+          <span id="subtotalDisplay" aria-live="polite">$0.00</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <label for="discountInput" style="font-family:'Inter',sans-serif;font-size:11.5px;color:#9ca3af;">Discount ($)</label>
+          <input type="number" id="discountInput" min="0" step="0.01" value="0"
+                 class="field" style="width:90px;padding:5px 8px;font-size:12px;"
+                 oninput="updateTotals()" aria-label="Discount amount in dollars">
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;border-top:1px solid #f3f4f6;margin-bottom:10px;">
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:#111827;">Total</span>
+          <span id="totalDisplay" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:#059669;letter-spacing:-.3px;" aria-live="polite">$0.00</span>
+        </div>
+        <textarea id="saleNotes" rows="2" class="field" style="resize:none;font-size:12px;margin-bottom:10px;" placeholder="Notes (optional)" aria-label="Sale notes"></textarea>
+        <button id="checkoutBtn" onclick="processSale()" disabled
+                style="width:100%;padding:10px;background:#c7d5ff;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:not-allowed;transition:all .14s;"
+                aria-disabled="true">
+          Complete Sale
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success modal -->
+<div id="successModal" style="display:none;position:fixed;inset:0;z-index:60;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.35);" onclick="closeModal()"></div>
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:14px;padding:32px;max-width:340px;width:100%;text-align:center;border:1px solid #eaecf0;position:relative;">
+      <div style="width:52px;height:52px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;" aria-hidden="true">
+        <svg width="24" height="24" fill="none" stroke="#10B981" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h2 id="modalTitle" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:#111827;margin-bottom:4px;">Sale complete!</h2>
+      <p style="font-size:12px;color:#9ca3af;font-family:'Inter',sans-serif;margin-bottom:4px;">Total charged</p>
+      <p id="modalTotal" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;color:#059669;letter-spacing:-.6px;margin-bottom:20px;">$0.00</p>
+      <div style="display:flex;gap:10px;">
+        <a id="receiptLink" href="#" class="btn btn-secondary" style="flex:1;justify-content:center;">View receipt</a>
+        <button onclick="closeModal()" class="btn btn-primary" style="flex:1;justify-content:center;border:none;cursor:pointer;">New sale</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const cart = {};
+const CSRF = '{{ csrf_token }}';
+
+// ── Add to cart ─────────────────────────────────────────────────────────────
+function addToCart(el) {
+  const id    = el.dataset.id;
+  const stock = parseInt(el.dataset.stock, 10);
+  const name  = el.dataset.name;
+  const price = parseFloat(el.dataset.price);
+
+  if (!cart[id]) {
+    cart[id] = { id, name, price, stock, qty: 0 };
+  }
+
+  if (cart[id].qty >= stock) {
+    showToast('Max stock reached (' + stock + ')', 'warn');
+    return;
+  }
+
+  cart[id].qty += 1;
+
+  // Highlight the card
+  el.style.borderColor = '#4F7CFF';
+  el.style.background  = '#f0f5ff';
+
+  renderCart();
+}
+
+// ── Adjust quantity ──────────────────────────────────────────────────────────
+function adjustQty(id, delta) {
+  if (!cart[id]) return;
+  cart[id].qty += delta;
+  if (cart[id].qty <= 0) {
+    delete cart[id];
+    // Un-highlight the product card
+    const card = document.querySelector('.pos-card[data-id="' + id + '"]');
+    if (card) { card.style.borderColor = ''; card.style.background = ''; }
+  }
+  renderCart();
+}
+
+// ── Clear cart ───────────────────────────────────────────────────────────────
+function clearCart() {
+  Object.keys(cart).forEach(k => delete cart[k]);
+  document.querySelectorAll('.pos-card').forEach(c => {
+    c.style.borderColor = '';
+    c.style.background  = '';
+  });
+  renderCart();
+}
+
+// ── Render cart ──────────────────────────────────────────────────────────────
+function renderCart() {
+  const keys = Object.keys(cart).filter(k => cart[k] && cart[k].qty > 0);
+  const container = document.getElementById('cartItems');
+  const emptyMsg  = document.getElementById('cartEmpty');
+  const btn       = document.getElementById('checkoutBtn');
+  const countBadge = document.getElementById('cartCount');
+
+  // Update count badge
+  const totalItems = keys.reduce((s, k) => s + cart[k].qty, 0);
+  countBadge.textContent = totalItems;
+
+  // Remove existing rows
+  container.querySelectorAll('.cart-row').forEach(r => r.remove());
+
+  if (!keys.length) {
+    emptyMsg.style.display = 'block';
+    btn.disabled = true;
+    btn.style.background = '#c7d5ff';
+    btn.style.cursor = 'not-allowed';
+    btn.setAttribute('aria-disabled', 'true');
+    updateTotals();
+    return;
+  }
+
+  emptyMsg.style.display = 'none';
+  btn.disabled = false;
+  btn.style.background = '#4F7CFF';
+  btn.style.cursor = 'pointer';
+  btn.setAttribute('aria-disabled', 'false');
+
+  keys.forEach(function(id) {
+    const item = cart[id];
+    const row  = document.createElement('div');
+    row.className = 'cart-row';
+    row.setAttribute('role', 'listitem');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f9fafb;gap:6px;';
+
+    // Info
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0;';
+    info.innerHTML =
+      '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:12px;font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(item.name) + '</div>' +
+      '<div style="font-family:ui-monospace,monospace;font-size:10.5px;color:#9ca3af;">$' + item.price.toFixed(2) + ' each</div>';
+
+    // Controls
+    const controls = document.createElement('div');
+    controls.style.cssText = 'display:flex;align-items:center;gap:3px;flex-shrink:0;';
+
+    const btnMinus = document.createElement('button');
+    btnMinus.textContent = '−';
+    btnMinus.setAttribute('aria-label', 'Decrease quantity of ' + item.name);
+    btnMinus.style.cssText = 'width:20px;height:20px;background:#f1f5f9;border:none;border-radius:4px;cursor:pointer;font-size:14px;color:#374151;line-height:1;display:flex;align-items:center;justify-content:center;';
+    btnMinus.onclick = function() { adjustQty(id, -1); };
+
+    const qtySpan = document.createElement('span');
+    qtySpan.textContent = item.qty;
+    qtySpan.style.cssText = 'font-family:\'Plus Jakarta Sans\',sans-serif;font-size:12px;font-weight:700;color:#111827;width:20px;text-align:center;';
+
+    const btnPlus = document.createElement('button');
+    btnPlus.textContent = '+';
+    btnPlus.setAttribute('aria-label', 'Increase quantity of ' + item.name);
+    btnPlus.style.cssText = 'width:20px;height:20px;background:#f1f5f9;border:none;border-radius:4px;cursor:pointer;font-size:14px;color:#374151;line-height:1;display:flex;align-items:center;justify-content:center;';
+    if (item.qty >= item.stock) { btnPlus.disabled = true; btnPlus.style.opacity = '0.4'; }
+    btnPlus.onclick = function() { adjustQty(id, 1); };
+
+    controls.appendChild(btnMinus);
+    controls.appendChild(qtySpan);
+    controls.appendChild(btnPlus);
+
+    row.appendChild(info);
+    row.appendChild(controls);
+    container.insertBefore(row, emptyMsg);
+  });
+
+  updateTotals();
+}
+
+// ── Totals ───────────────────────────────────────────────────────────────────
+function updateTotals() {
+  const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
+  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+  const total    = Math.max(0, subtotal - discount);
+  document.getElementById('subtotalDisplay').textContent = '$' + subtotal.toFixed(2);
+  document.getElementById('totalDisplay').textContent    = '$' + total.toFixed(2);
+}
+
+// ── Process sale ─────────────────────────────────────────────────────────────
+async function processSale() {
+  const keys = Object.keys(cart).filter(k => cart[k] && cart[k].qty > 0);
+  if (!keys.length) return;
+
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+
+  const items    = keys.map(id => ({ product_id: id, quantity: cart[id].qty }));
+  const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+  const notes    = document.getElementById('saleNotes').value;
+
+  try {
+    const res  = await fetch('/sales/process/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ items, discount, notes }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('modalTotal').textContent = '$' + data.total.toFixed(2);
+      document.getElementById('receiptLink').href = '/sales/' + data.sale_id + '/receipt/';
+      document.getElementById('successModal').style.display = 'block';
+    } else {
+      showToast(data.error || 'Error processing sale', 'error');
+    }
+  } catch (e) {
+    showToast('Network error — please try again.', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Complete Sale';
+}
+
+function closeModal() {
+  document.getElementById('successModal').style.display = 'none';
+  clearCart();
+  location.reload();
+}
+
+// ── Filter ───────────────────────────────────────────────────────────────────
+function filterPOS() {
+  const q   = document.getElementById('posSearch').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value.toLowerCase();
+  document.querySelectorAll('.pos-card').forEach(function(card) {
+    const matchName = !q || card.dataset.name.toLowerCase().includes(q) || card.dataset.sku.toLowerCase().includes(q);
+    const matchCat  = !cat || card.dataset.cat.toLowerCase() === cat;
+    card.style.display = (matchName && matchCat) ? '' : 'none';
+  });
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  const d = document.createElement('div');
+  d.setAttribute('role', 'alert');
+  d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:100;padding:10px 16px;border-radius:8px;font-family:Inter,sans-serif;font-size:12.5px;font-weight:500;border:1px solid;'
+    + (type === 'error' ? 'background:#fef2f2;color:#991b1b;border-color:#fecaca;' : 'background:#fffbeb;color:#92400e;border-color:#fde68a;');
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function() { d.remove(); }, 3500);
+}
+</script>
+{% endblock %}

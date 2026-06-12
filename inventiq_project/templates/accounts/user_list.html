@@ -1,0 +1,75 @@
+{% extends "layouts/base.html" %}
+{% block title %}Team{% endblock %}
+{% block page_title %}Team{% endblock %}
+{% block page_subtitle %}Manage users and access levels{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+  <form method="get" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" role="search" aria-label="Search team members">
+    <div style="position:relative;">
+      <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#9ca3af;pointer-events:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="search" name="search" value="{{ search }}" placeholder="Search team…" class="field" style="padding-left:28px;width:190px;" aria-label="Search by name or username">
+    </div>
+    <select name="role" class="field" style="width:130px;" aria-label="Filter by role">
+      <option value="">All roles</option>
+      <option value="manager" {% if role == 'manager' %}selected{% endif %}>Manager</option>
+      <option value="salesperson" {% if role == 'salesperson' %}selected{% endif %}>Salesperson</option>
+    </select>
+    <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+    {% if search or role %}<a href="{% url 'accounts:user_list' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+  </form>
+  <a href="{% url 'accounts:user_create' %}" class="btn btn-primary btn-sm">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    Add user
+  </a>
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <table class="tbl" aria-label="Team members">
+    <thead><tr>
+      <th scope="col">Member</th><th scope="col">Username</th><th scope="col">Role</th>
+      <th scope="col">Joined</th><th scope="col" style="text-align:center;">Status</th>
+      <th scope="col" style="text-align:center;">Actions</th>
+    </tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:9px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:800;color:#4F7CFF;flex-shrink:0;" aria-hidden="true">{{ u.avatar_initials|default:u.username|slice:":2"|upper }}</div>
+            <div>
+              <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#111827;">{{ u.full_name }}</p>
+              <p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;">{{ u.email|default:"—" }}</p>
+            </div>
+          </div>
+        </td>
+        <td class="mn">{{ u.username }}</td>
+        <td>{% if u.role == 'manager' %}<span class="badge badge-purple">Manager</span>{% else %}<span class="badge badge-blue">Salesperson</span>{% endif %}</td>
+        <td class="mn" style="font-size:11.5px;">{{ u.date_joined|date:"M j, Y" }}</td>
+        <td style="text-align:center;">{% if u.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-gray">Inactive</span>{% endif %}</td>
+        <td style="text-align:center;">
+          <div style="display:flex;gap:5px;justify-content:center;" role="group" aria-label="Actions for {{ u.full_name }}">
+            <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+            {% if u != request.user %}
+            <form method="post" action="{% url 'accounts:user_toggle' u.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-ghost{% endif %}" aria-label="{% if u.is_active %}Deactivate{% else %}Activate{% endif %} {{ u.full_name }}">
+                {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">No users found.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% if users.has_other_pages %}
+  <nav style="padding:10px 14px;border-top:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;" aria-label="Pagination">
+    <p style="font-size:11.5px;color:#9ca3af;font-family:'Inter',sans-serif;">Page {{ users.number }} of {{ users.paginator.num_pages }}</p>
+    <div style="display:flex;gap:6px;">
+      {% if users.has_previous %}<a href="?page={{ users.previous_page_number }}&search={{ search }}&role={{ role }}" class="btn btn-secondary btn-sm">← Prev</a>{% endif %}
+      {% if users.has_next %}<a href="?page={{ users.next_page_number }}&search={{ search }}&role={{ role }}" class="btn btn-secondary btn-sm">Next →</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

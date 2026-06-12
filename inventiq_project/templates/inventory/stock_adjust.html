@@ -1,0 +1,35 @@
+{% extends "layouts/base.html" %}
+{% block title %}Adjust Stock{% endblock %}
+{% block page_title %}Adjust Stock{% endblock %}
+{% block page_subtitle %}{{ product.name }}{% endblock %}
+{% block content %}
+<div style="max-width:480px;">
+  <div class="card" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div><p style="font-size:11px;color:#9ca3af;margin-bottom:4px;">Current stock</p><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;{% if product.is_out_of_stock %}color:#b91c1c;{% elif product.is_low_stock %}color:#d97706;{% else %}color:#111827;{% endif %}">{{ product.stock_quantity }}</p></div>
+    <div style="text-align:center;"><p style="font-size:11px;color:#9ca3af;margin-bottom:4px;">Threshold</p><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;color:#6b7280;">{{ product.effective_threshold }}{% if product.use_ai_threshold %} <span class="badge badge-blue" style="font-size:9px;">AI</span>{% endif %}</p></div>
+    <div>{% if product.is_out_of_stock %}<span class="badge badge-red">Out of stock</span>{% elif product.is_low_stock %}<span class="badge badge-amber">Low stock</span>{% else %}<span class="badge badge-green">In stock</span>{% endif %}</div>
+  </div>
+  <form method="post" class="card" novalidate>
+    {% csrf_token %}
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#111827;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eaecf0;">Stock adjustment</div>
+    <div style="margin-bottom:12px;">
+      <label for="{{ form.quantity_change.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Quantity change <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.quantity_change }}
+      <p style="font-size:11px;color:#9ca3af;margin-top:4px;font-family:'Inter',sans-serif;">Positive to add stock, negative to remove</p>
+      {% if form.quantity_change.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.quantity_change.errors.0 }}</p>{% endif %}
+    </div>
+    <div style="margin-bottom:12px;">
+      <label for="{{ form.reason.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Reason <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.reason }}
+    </div>
+    <div style="margin-bottom:16px;">
+      <label for="{{ form.notes.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Notes</label>
+      {{ form.notes }}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button type="submit" class="btn btn-primary">Update stock</button>
+      <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — InventiQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f5f7fa; min-height: 100vh; display: flex; }
+
+        .left-panel {
+            width: 42%; background: #1a2236; display: none;
+            flex-direction: column; justify-content: space-between; padding: 48px;
+        }
+        @media (min-width: 1024px) { .left-panel { display: flex; } }
+
+        .panel-logo { display: flex; align-items: center; gap: 10px; }
+        .panel-icon { width: 32px; height: 32px; background: #4F7CFF; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .panel-icon svg { width: 15px; height: 15px; }
+        .panel-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+
+        .panel-headline { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 30px; font-weight: 800; color: #fff; line-height: 1.25; letter-spacing: -0.8px; margin-bottom: 14px; }
+        .panel-body { font-size: 14px; color: rgba(255,255,255,.55); line-height: 1.7; max-width: 320px; }
+
+        .panel-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-card { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 16px; }
+        .stat-num { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+        .stat-lbl { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 3px; }
+
+        .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px; }
+        .form-card { width: 100%; max-width: 380px; }
+
+        .mobile-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+        @media (min-width: 1024px) { .mobile-logo { display: none; } }
+        .mobile-icon { width: 28px; height: 28px; background: #4F7CFF; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+        .mobile-icon svg { width: 13px; height: 13px; }
+        .mobile-brand { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 800; color: #111827; }
+
+        .form-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .form-sub { font-size: 13px; color: #9ca3af; margin-bottom: 28px; }
+
+        label { display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px; font-family: 'Inter', sans-serif; }
+        .field { width: 100%; padding: 10px 12px; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: #111827; transition: border-color .14s, box-shadow .14s; margin-bottom: 4px; }
+        .field:focus { outline: none; border-color: #4F7CFF; box-shadow: 0 0 0 3px rgba(79,124,255,.12); }
+        .field::placeholder { color: #9ca3af; }
+        .field-error { font-size: 11.5px; color: #b91c1c; margin-bottom: 14px; display: block; }
+
+        .field-wrap { margin-bottom: 16px; }
+
+        .submit-btn { width: 100%; padding: 11px; background: #4F7CFF; border: none; border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13.5px; font-weight: 700; color: #fff; cursor: pointer; margin-top: 8px; transition: background .14s; }
+        .submit-btn:hover { background: #3d68e8; }
+        .submit-btn:active { transform: scale(.99); }
+
+        .demo-block { margin-top: 22px; padding: 12px 14px; background: #f1f5f9; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.8; color: #6b7280; }
+        .demo-block strong { color: #374151; font-weight: 600; }
+
+        .flash-error { display: flex; align-items: center; gap: 8px; padding: 10px 13px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; font-size: 12.5px; color: #991b1b; margin-bottom: 18px; }
+
+        *:focus-visible { outline: 2px solid #4F7CFF; outline-offset: 2px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="left-panel" aria-hidden="true">
+        <div class="panel-logo">
+            <div class="panel-icon"><svg fill="none" stroke="#fff" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
+            <span class="panel-brand">InventiQ</span>
+        </div>
+        <div>
+            <p class="panel-headline">Inventory that<br>thinks ahead.</p>
+            <p class="panel-body">AI-powered stock intelligence, real-time sales processing, and analytics your whole team will actually use.</p>
+        </div>
+        <div class="panel-stats">
+            <div class="stat-card"><div class="stat-num">98.4%</div><div class="stat-lbl">Stock accuracy</div></div>
+            <div class="stat-card"><div class="stat-num">3.2×</div><div class="stat-lbl">Reorder efficiency</div></div>
+            <div class="stat-card"><div class="stat-num">$0</div><div class="stat-lbl">ML dependencies</div></div>
+            <div class="stat-card"><div class="stat-num">60s</div><div class="stat-lbl">Setup time</div></div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="form-card">
+            <div class="mobile-logo">
+                <div class="mobile-icon"><svg fill="none" stroke="#fff" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
+                <span class="mobile-brand">InventiQ</span>
+            </div>
+
+            <h1 class="form-heading">Welcome back</h1>
+            <p class="form-sub">Sign in to your account to continue</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="flash-error" role="alert">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="field-wrap">
+                    <label for="id_username">Username</label>
+                    <input type="text" name="username" id="id_username" class="field" placeholder="Enter your username" autocomplete="username" required>
+                    {% if form.username.errors %}<span class="field-error" role="alert">{{ form.username.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="field-wrap">
+                    <label for="id_password">Password</label>
+                    <input type="password" name="password" id="id_password" class="field" placeholder="Enter your password" autocomplete="current-password" required>
+                    {% if form.password.errors %}<span class="field-error" role="alert">{{ form.password.errors.0 }}</span>{% endif %}
+                </div>
+                <button type="submit" class="submit-btn">Sign in</button>
+            </form>
+
+            <div class="demo-block">
+                Manager: <strong>admin / admin123</strong><br>
+                Salesperson: <strong>sarah_chen / sales123</strong>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

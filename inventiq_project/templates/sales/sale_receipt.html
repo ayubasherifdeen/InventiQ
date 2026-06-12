@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Receipt #{{ sale.pk|stringformat:"05d" }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f7fa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.receipt{background:#fff;border:1px solid #eaecf0;border-radius:14px;padding:28px;width:100%;max-width:320px;}
+.logo-row{display:flex;align-items:center;gap:9px;justify-content:center;margin-bottom:18px;}
+.logo-icon{width:30px;height:30px;background:#4F7CFF;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:14px;height:14px;}
+.logo-name{font-size:16px;font-weight:800;color:#111827;letter-spacing:-.3px;}
+hr{border:none;border-top:1px dashed #e5e7eb;margin:14px 0;}
+.meta{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;}
+.meta-l{color:#9ca3af;}.meta-v{font-family:ui-monospace,monospace;color:#374151;font-weight:500;}
+.item{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f3f4f6;}
+.item:last-child{border:none;}
+.item-n{font-size:12.5px;font-weight:700;color:#111827;}
+.item-s{font-size:10.5px;color:#9ca3af;font-family:ui-monospace,monospace;margin-top:2px;}
+.item-p{font-size:12.5px;font-weight:700;color:#374151;}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;}
+.total-l{font-size:14px;font-weight:700;color:#111827;}
+.total-v{font-size:24px;font-weight:800;color:#059669;letter-spacing:-.5px;}
+.thanks{text-align:center;font-size:11px;color:#9ca3af;margin-top:14px;}
+.btn-row{display:flex;gap:8px;margin-top:18px;}
+.btn{flex:1;padding:9px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid;text-align:center;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;}
+.btn-blue{background:#4F7CFF;color:#fff;border-color:#4F7CFF;}
+.btn-gray{background:#fff;color:#374151;border-color:#e5e7eb;}
+@media print{.btn-row{display:none;}body{background:#fff;}}
+</style>
+</head>
+<body>
+<div class="receipt" role="main">
+  <div class="logo-row">
+    <div class="logo-icon"><svg fill="none" stroke="#fff" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
+    <span class="logo-name">InventiQ</span>
+  </div>
+  <p style="text-align:center;font-size:11px;color:#9ca3af;margin-bottom:14px;">Official Receipt</p>
+  <hr>
+  <div class="meta"><span class="meta-l">Receipt</span><span class="meta-v">#{{ sale.pk|stringformat:"05d" }}</span></div>
+  <div class="meta"><span class="meta-l">Date</span><span class="meta-v">{{ sale.created_at|date:"M j, Y H:i" }}</span></div>
+  <div class="meta"><span class="meta-l">Served by</span><span class="meta-v">{{ sale.salesperson.full_name|default:"—" }}</span></div>
+  <hr>
+  {% for item in sale.items.all %}
+  <div class="item">
+    <div><div class="item-n">{{ item.product.name }}</div><div class="item-s">{{ item.quantity }} × ${{ item.unit_price }}</div></div>
+    <div class="item-p">${{ item.subtotal|floatformat:2 }}</div>
+  </div>
+  {% endfor %}
+  <hr>
+  {% if sale.discount_amount > 0 %}<div class="meta" style="margin-bottom:8px;"><span class="meta-l">Discount</span><span class="meta-v">-${{ sale.discount_amount|floatformat:2 }}</span></div>{% endif %}
+  <div class="total-row"><span class="total-l">Total</span><span class="total-v">${{ sale.total_amount|floatformat:2 }}</span></div>
+  <p class="thanks">Thank you for your purchase!</p>
+  <div class="btn-row">
+    <button onclick="window.print()" class="btn btn-blue">Print</button>
+    <a href="{% url 'sales:sale_list' %}" class="btn btn-gray">Back</a>
+  </div>
+</div>
+</body>
+</html>

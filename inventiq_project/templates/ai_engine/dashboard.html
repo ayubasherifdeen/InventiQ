@@ -1,0 +1,69 @@
+{% extends "layouts/base.html" %}
+{% block title %}AI Insights{% endblock %}
+{% block page_title %}AI Insights{% endblock %}
+{% block page_subtitle %}Automated inventory intelligence — moving-average demand analysis{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;">
+  <div class="card" style="position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#4F7CFF;"></div><div class="kpi-label">Analyzed</div><div class="kpi-val">{{ results|length }}</div><div class="kpi-sub">Active products</div></div>
+  <div class="card" style="position:relative;overflow:hidden;{% if low_stock %}border-color:#fde68a;{% endif %}"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#F59E0B;"></div><div class="kpi-label">Stock alerts</div><div class="kpi-val" style="{% if low_stock %}color:#d97706;{% endif %}">{{ low_stock|length }}</div><div class="kpi-sub" style="{% if low_stock %}color:#d97706;{% endif %}">{% if low_stock %}Need restocking{% else %}All stocked{% endif %}</div></div>
+  <div class="card" style="position:relative;overflow:hidden;{% if spike_products %}border-color:#bfdbfe;{% endif %}"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#3B82F6;"></div><div class="kpi-label">Demand spikes</div><div class="kpi-val" style="{% if spike_products %}color:#1d4ed8;{% endif %}">{{ spike_products|length }}</div><div class="kpi-sub" style="{% if spike_products %}color:#1d4ed8;{% endif %}">Unusual velocity</div></div>
+</div>
+
+{% if alerts %}
+<div class="card" style="margin-bottom:14px;padding:14px 18px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div class="card-title">Active alerts</div>
+    <form method="post" action="{% url 'ai_engine:refresh' %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-sm">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Refresh
+      </button>
+    </form>
+  </div>
+  {% for alert in alerts %}
+  <div class="alert-item {% if alert.severity == 'critical' %}alert-red{% elif alert.severity == 'warning' %}alert-amber{% else %}alert-blue{% endif %}" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;" role="alert">
+    <p class="alert-text" style="flex:1;">{{ alert.message }}{% if alert.restock_suggestion > 0 %} — suggest <strong>{{ alert.restock_suggestion }} units</strong>{% endif %}</p>
+    <a href="{% url 'inventory:stock_adjust' alert.product.pk %}" style="font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:#4F7CFF;text-decoration:none;white-space:nowrap;">Restock →</a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="padding:14px 18px;border-bottom:1px solid #eaecf0;">
+    <div class="card-title">Full product analysis</div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="tbl" aria-label="AI analysis for all products">
+      <thead><tr>
+        <th scope="col">Product</th>
+        <th scope="col" style="text-align:right;">Stock</th>
+        <th scope="col" style="text-align:right;">AI threshold</th>
+        <th scope="col" style="text-align:right;">Velocity</th>
+        <th scope="col" style="text-align:right;">Restock suggest</th>
+        <th scope="col" style="text-align:center;">Status</th>
+        <th scope="col" style="text-align:center;">Detail</th>
+      </tr></thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td class="strong">{{ r.product.name }} <code style="font-size:10.5px;color:#9ca3af;font-family:ui-monospace,monospace;">{{ r.product.sku }}</code></td>
+          <td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;{% if r.product.is_out_of_stock %}color:#b91c1c;{% elif r.product.is_low_stock %}color:#d97706;{% else %}color:#111827;{% endif %}">{{ r.current_stock }}</td>
+          <td style="text-align:right;"><span style="font-family:ui-monospace,monospace;font-size:12px;">{{ r.ai_threshold }}</span> <span class="badge badge-blue" style="font-size:9px;">AI</span></td>
+          <td style="text-align:right;font-family:ui-monospace,monospace;font-size:12px;color:#6b7280;">{{ r.daily_velocity }}/day</td>
+          <td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;{% if r.restock_suggestion > 0 %}color:#059669;{% else %}color:#d1d5db;{% endif %}">{% if r.restock_suggestion > 0 %}{{ r.restock_suggestion }}{% else %}—{% endif %}</td>
+          <td style="text-align:center;">
+            {% if r.demand_spike %}<span class="badge badge-blue">Spike ×{{ r.spike_ratio }}</span>
+            {% elif r.product.is_out_of_stock %}<span class="badge badge-red">Out of stock</span>
+            {% elif r.is_low_stock %}<span class="badge badge-amber">Low stock</span>
+            {% else %}<span class="badge badge-green">Healthy</span>{% endif %}
+          </td>
+          <td style="text-align:center;"><a href="{% url 'ai_engine:product_analysis' r.product.pk %}" style="font-size:11.5px;font-weight:600;color:#4F7CFF;text-decoration:none;">View →</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No products to analyze.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

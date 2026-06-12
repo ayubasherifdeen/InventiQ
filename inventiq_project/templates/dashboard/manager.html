@@ -1,0 +1,134 @@
+{% extends "layouts/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}{{ user.first_name|default:user.username }}, here's what's happening{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+  <div style="display:flex;background:#fff;border:1px solid #eaecf0;border-radius:7px;padding:3px;gap:2px;" role="group" aria-label="Date range filter">
+    <a href="?period=7"  style="padding:5px 11px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:{% if period == '7' %}600{% else %}500{% endif %};text-decoration:none;{% if period == '7' %}background:#4F7CFF;color:#fff;{% else %}color:#6b7280;{% endif %}">7 days</a>
+    <a href="?period=30" style="padding:5px 11px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:{% if period == '30' or not period %}600{% else %}500{% endif %};text-decoration:none;{% if period == '30' or not period %}background:#4F7CFF;color:#fff;{% else %}color:#6b7280;{% endif %}">30 days</a>
+    <a href="?period=90" style="padding:5px 11px;border-radius:5px;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:{% if period == '90' %}600{% else %}500{% endif %};text-decoration:none;{% if period == '90' %}background:#4F7CFF;color:#fff;{% else %}color:#6b7280;{% endif %}">90 days</a>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="{% url 'dashboard:export_sales' %}?period={{ period|default:'30' }}" class="btn btn-secondary btn-sm">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Export sales
+    </a>
+    <a href="{% url 'dashboard:export_inventory' %}" class="btn btn-secondary btn-sm">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Export inventory
+    </a>
+  </div>
+</div>
+
+<!-- KPI cards -->
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;" role="list" aria-label="Key metrics">
+  <div class="card" style="position:relative;overflow:hidden;" role="listitem">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#10B981;" aria-hidden="true"></div>
+    <div class="kpi-label">Revenue</div>
+    <div class="kpi-val">${{ total_revenue|floatformat:2 }}</div>
+    <div class="kpi-sub">Last {{ days }} days</div>
+  </div>
+  <div class="card" style="position:relative;overflow:hidden;" role="listitem">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#4F7CFF;" aria-hidden="true"></div>
+    <div class="kpi-label">Transactions</div>
+    <div class="kpi-val">{{ total_sales }}</div>
+    <div class="kpi-sub">Completed sales</div>
+  </div>
+  <div class="card" style="position:relative;overflow:hidden;" role="listitem">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#8B5CF6;" aria-hidden="true"></div>
+    <div class="kpi-label">Avg. sale</div>
+    <div class="kpi-val">${{ avg_sale|floatformat:2 }}</div>
+    <div class="kpi-sub">Per transaction</div>
+  </div>
+  <div class="card" style="position:relative;overflow:hidden;{% if low_stock_count > 0 %}border-color:#fde68a;{% endif %}" role="listitem">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#F59E0B;" aria-hidden="true"></div>
+    <div class="kpi-label">Stock alerts</div>
+    <div class="kpi-val" style="{% if low_stock_count > 0 %}color:#d97706;{% endif %}">{{ low_stock_count }}</div>
+    <div class="kpi-sub" style="{% if low_stock_count > 0 %}color:#d97706;{% endif %}">{% if low_stock_count > 0 %}Need restocking{% else %}All stocked{% endif %}</div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div style="display:grid;grid-template-columns:1fr 240px;gap:12px;margin-bottom:14px;">
+  <div class="card">
+    <div class="card-title">Revenue over time</div>
+    <div class="card-sub">Daily totals — last {{ days }} days</div>
+    <canvas id="revenueChart" height="90" aria-label="Line chart of daily revenue over {{ days }} days"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">Top products</div>
+    <div class="card-sub">By revenue this period</div>
+    <div role="list">
+      {% for p in top_products %}
+      <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #f3f4f6;" role="listitem">
+        <div style="width:20px;height:20px;background:#eff6ff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:800;color:#4F7CFF;flex-shrink:0;" aria-hidden="true">{{ forloop.counter }}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.product__name }}</div>
+          <div style="font-size:10.5px;color:#9ca3af;">{{ p.total_qty }} units</div>
+        </div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#059669;">${{ p.total_revenue|floatformat:0 }}</div>
+      </div>
+      {% empty %}<p style="font-size:12px;color:#9ca3af;padding:8px 0;">No data yet</p>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Bottom row -->
+<div style="display:grid;grid-template-columns:200px 1fr;gap:12px;">
+  <div class="card" style="padding:14px 16px;">
+    <div class="card-title" style="margin-bottom:10px;">AI alerts</div>
+    {% for alert in alerts %}
+    <div class="alert-item {% if alert.severity == 'critical' %}alert-red{% elif alert.severity == 'warning' %}alert-amber{% else %}alert-blue{% endif %}" role="alert">
+      <p class="alert-text">{{ alert.message }}</p>
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:12px 0;">
+      <svg width="24" height="24" fill="none" stroke="#10B981" viewBox="0 0 24 24" stroke-width="2" style="margin:0 auto 6px;display:block;" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p style="font-size:11.5px;color:#9ca3af;">All healthy</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card" style="padding:14px 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;">
+      <div class="card-title">Recent transactions</div>
+      <a href="{% url 'sales:sale_list' %}" style="font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;color:#4F7CFF;text-decoration:none;">View all →</a>
+    </div>
+    <table class="tbl" aria-label="Recent sales transactions">
+      <thead><tr><th scope="col">Sale</th><th scope="col">Salesperson</th><th scope="col">Items</th><th scope="col">Date</th><th scope="col" style="text-align:right;">Total</th></tr></thead>
+      <tbody>
+        {% for sale in recent_sales %}
+        <tr>
+          <td class="sid"><a href="{% url 'sales:sale_detail' sale.pk %}" style="color:#4F7CFF;text-decoration:none;">#{{ sale.pk|stringformat:"05d" }}</a></td>
+          <td class="strong">{{ sale.salesperson.full_name|default:"—" }}</td>
+          <td>{{ sale.item_count }} item{{ sale.item_count|pluralize }}</td>
+          <td class="mn">{{ sale.created_at|date:"M j, H:i" }}</td>
+          <td class="money">${{ sale.total_amount|floatformat:2 }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="5" style="text-align:center;padding:16px;color:#9ca3af;">No sales yet</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#9ca3af';
+const ctx = document.getElementById('revenueChart').getContext('2d');
+const grad = ctx.createLinearGradient(0,0,0,180);
+grad.addColorStop(0,'rgba(79,124,255,.15)');
+grad.addColorStop(1,'rgba(79,124,255,0)');
+new Chart(ctx,{
+  type:'line',
+  data:{labels:{{ chart_labels|safe }},datasets:[{data:{{ chart_revenue|safe }},borderColor:'#4F7CFF',backgroundColor:grad,borderWidth:2,pointRadius:2,pointHoverRadius:5,tension:.4,fill:true}]},
+  options:{
+    responsive:true,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#eaecf0',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#111827',bodyFont:{family:'ui-monospace,monospace',size:12},padding:10,callbacks:{label:c=>' $'+c.raw.toFixed(2)}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:11},maxTicksLimit:8}},y:{grid:{color:'#f3f4f6'},ticks:{font:{size:11},callback:v=>'$'+v}}}
+  }
+});
+</script>
+{% endblock %}

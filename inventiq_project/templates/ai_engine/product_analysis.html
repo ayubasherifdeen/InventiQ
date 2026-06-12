@@ -1,0 +1,75 @@
+{% extends "layouts/base.html" %}
+{% block title %}AI Analysis — {{ product.name }}{% endblock %}
+{% block page_title %}AI Analysis{% endblock %}
+{% block page_subtitle %}{{ product.name }} · {{ product.sku }}{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 220px;gap:14px;">
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="card">
+      <div class="card-title">30-day sales volume</div>
+      <div class="card-sub">Units sold per day</div>
+      <canvas id="salesChart" height="110" aria-label="Bar chart of daily sales for {{ product.name }}"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">AI calculation breakdown</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:8px;">
+          <div><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#111827;">Sales velocity</p><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;margin-top:2px;">Avg units/active day — 30-day window</p></div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:#4F7CFF;">{{ analysis.daily_velocity }}<span style="font-size:11px;color:#9ca3af;font-weight:400;">/day</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:8px;">
+          <div><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#111827;">AI reorder threshold</p><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;margin-top:2px;">velocity × lead_time(7d) × safety(1.5) × trend</p></div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:#4F7CFF;">{{ analysis.ai_threshold }}<span style="font-size:11px;color:#9ca3af;font-weight:400;"> units</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:8px;">
+          <div><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#111827;">Suggested restock qty</p><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;margin-top:2px;">safety_stock + 30-day cycle stock</p></div>
+          <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;color:#059669;">{{ analysis.restock_suggestion }}<span style="font-size:11px;color:#9ca3af;font-weight:400;"> units</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:{% if analysis.demand_spike %}#eff6ff{% else %}#f9fafb{% endif %};border-radius:8px;{% if analysis.demand_spike %}border:1px solid #bfdbfe;{% endif %}">
+          <div><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#111827;">Demand spike detection</p><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;margin-top:2px;">7-day MA vs 30-day MA — threshold ≥ 2×</p></div>
+          {% if analysis.demand_spike %}<span class="badge badge-blue">Spike ×{{ analysis.spike_ratio }}</span>{% else %}<span class="badge badge-gray">Normal ×{{ analysis.spike_ratio }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div class="card" style="text-align:center;{% if analysis.product.is_out_of_stock %}border-color:#fca5a5;{% elif analysis.is_low_stock %}border-color:#fde68a;{% endif %}">
+      <p style="font-size:11px;color:#9ca3af;margin-bottom:8px;">Current stock</p>
+      <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:44px;font-weight:800;letter-spacing:-.8px;{% if analysis.product.is_out_of_stock %}color:#b91c1c;{% elif analysis.is_low_stock %}color:#d97706;{% else %}color:#111827;{% endif %}">{{ analysis.current_stock }}</p>
+      <div style="margin-top:8px;">{% if analysis.product.is_out_of_stock %}<span class="badge badge-red">Out of stock</span>{% elif analysis.is_low_stock %}<span class="badge badge-amber">Low stock</span>{% else %}<span class="badge badge-green">Healthy</span>{% endif %}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #eaecf0;">
+        <div><p style="font-size:10px;color:#9ca3af;">Manual</p><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:#111827;">{{ analysis.product.reorder_threshold }}</p></div>
+        <div><p style="font-size:10px;color:#9ca3af;">AI</p><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:#4F7CFF;">{{ analysis.ai_threshold }}</p></div>
+      </div>
+    </div>
+    {% if analysis.is_low_stock or analysis.demand_spike %}
+    <div class="alert-item alert-amber" style="flex-direction:column;">
+      <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px;">AI recommendation</p>
+      <p class="alert-text">{% if analysis.product.is_out_of_stock %}This product is out of stock.{% elif analysis.is_low_stock %}Stock is below AI threshold.{% endif %}{% if analysis.demand_spike %} Demand spike ×{{ analysis.spike_ratio }} detected.{% endif %} Order <strong>{{ analysis.restock_suggestion }} units</strong>.</p>
+      <a href="{% url 'inventory:stock_adjust' product.pk %}" class="btn btn-primary btn-sm" style="margin-top:10px;justify-content:center;">Restock now</a>
+    </div>
+    {% else %}
+    <div class="alert-item alert-blue"><p class="alert-text"><strong>All good.</strong> No action required at this time.</p></div>
+    {% endif %}
+    <div class="card" style="padding:12px 14px;">
+      <a href="{% url 'inventory:product_detail' product.pk %}" style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;color:#374151;text-decoration:none;border-bottom:1px solid #f3f4f6;">View product <span style="color:#9ca3af;">→</span></a>
+      <a href="{% url 'inventory:product_edit' product.pk %}" style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;color:#374151;text-decoration:none;border-bottom:1px solid #f3f4f6;">Edit product <span style="color:#9ca3af;">→</span></a>
+      <a href="{% url 'inventory:stock_adjust' product.pk %}" style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;color:#374151;text-decoration:none;border-bottom:1px solid #f3f4f6;">Adjust stock <span style="color:#9ca3af;">→</span></a>
+      <a href="{% url 'ai_engine:dashboard' %}" style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;color:#374151;text-decoration:none;">← All AI insights</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const data = {{ sales_data|safe }};
+const labels = Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});});
+Chart.defaults.font.family = "'Inter', sans-serif";
+new Chart(document.getElementById('salesChart').getContext('2d'),{
+  type:'bar',
+  data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>0?'rgba(79,124,255,.75)':'rgba(209,213,219,.4)'),borderRadius:3,borderSkipped:false}]},
+  options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#eaecf0',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#111827',padding:9}},scales:{x:{grid:{display:false},ticks:{color:'#9ca3af',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},stepSize:1},beginAtZero:true}}}
+});
+</script>
+{% endblock %}

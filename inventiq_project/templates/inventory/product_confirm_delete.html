@@ -1,0 +1,21 @@
+{% extends "layouts/base.html" %}
+{% block title %}Remove Product{% endblock %}
+{% block page_title %}Remove product{% endblock %}
+{% block content %}
+<div style="max-width:400px;">
+  <div class="card" style="border-color:#fca5a5;">
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:18px;">
+      <div style="width:38px;height:38px;background:#fef2f2;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" fill="none" stroke="#b91c1c" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div>
+      <div>
+        <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:#111827;margin-bottom:4px;">Remove "{{ product.name }}"?</h2>
+        <p style="font-size:12.5px;color:#6b7280;font-family:'Inter',sans-serif;line-height:1.5;">This will deactivate the product. All historical sales data is preserved.</p>
+      </div>
+    </div>
+    <form method="post" style="display:flex;gap:8px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger" style="flex:1;justify-content:center;">Yes, remove</button>
+      <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary" style="flex:1;justify-content:center;">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "layouts/base.html" %}
+{% block title %}Sale #{{ sale.pk|stringformat:"05d" }}{% endblock %}
+{% block page_title %}Sale #{{ sale.pk|stringformat:"05d" }}{% endblock %}
+{% block page_subtitle %}{{ sale.created_at|date:"M j, Y · H:i" }}{% endblock %}
+{% block content %}
+<div style="max-width:640px;">
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
+    <div style="padding:14px 18px;background:#f9fafb;border-bottom:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;">Salesperson</p><p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#111827;">{{ sale.salesperson.full_name|default:"—" }}</p></div>
+      <div style="text-align:right;"><p style="font-size:11px;color:#9ca3af;font-family:'Inter',sans-serif;">Date</p><p style="font-family:ui-monospace,monospace;font-size:12px;color:#374151;">{{ sale.created_at|date:"M j, Y H:i" }}</p></div>
+      <div>{% if sale.status == 'completed' %}<span class="badge badge-green">Completed</span>{% else %}<span class="badge badge-red">Voided</span>{% endif %}</div>
+    </div>
+    <table class="tbl" style="width:100%;" aria-label="Items in this sale">
+      <thead><tr><th scope="col">Product</th><th scope="col" style="text-align:right;">Unit price</th><th scope="col" style="text-align:right;">Qty</th><th scope="col" style="text-align:right;">Subtotal</th></tr></thead>
+      <tbody>
+        {% for item in sale.items.all %}
+        <tr><td class="strong">{{ item.product.name }}</td><td class="mn" style="text-align:right;">${{ item.unit_price }}</td><td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;">{{ item.quantity }}</td><td class="money">${{ item.subtotal|floatformat:2 }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="padding:14px 18px;background:#f9fafb;border-top:1px solid #eaecf0;">
+      {% if sale.discount_amount > 0 %}<div style="display:flex;justify-content:space-between;font-size:12.5px;color:#9ca3af;margin-bottom:8px;"><span>Discount</span><span style="font-family:ui-monospace,monospace;">-${{ sale.discount_amount|floatformat:2 }}</span></div>{% endif %}
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:#111827;">Total</span>
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:#059669;letter-spacing:-.4px;">${{ sale.total_amount|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <a href="{% url 'sales:sale_receipt' sale.pk %}" class="btn btn-secondary btn-sm">Print receipt</a>
+    <a href="{% url 'sales:sale_list' %}" class="btn btn-ghost btn-sm">← Back to sales</a>
+  </div>
+</div>
+{% endblock %}

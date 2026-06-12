@@ -1,0 +1,33 @@
+{% extends "layouts/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block page_subtitle %}Product classifications{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 280px;gap:14px;">
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="tbl" aria-label="Product categories">
+      <thead><tr><th scope="col">Name</th><th scope="col">Products</th><th scope="col">Description</th></tr></thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr><td class="strong">{{ cat.name }}</td><td><span class="badge badge-blue">{{ cat.products.count }}</span></td><td style="color:#9ca3af;font-size:12px;">{{ cat.description|default:"—" }}</td></tr>
+        {% empty %}<tr><td colspan="3" style="text-align:center;padding:32px;color:#9ca3af;">No categories yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">Add category</div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div style="margin-bottom:12px;">
+        <label for="{{ form.name.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Name <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+        {{ form.name }}{% if form.name.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.name.errors.0 }}</p>{% endif %}
+      </div>
+      <div style="margin-bottom:14px;">
+        <label for="{{ form.description.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Description</label>
+        {{ form.description }}
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Add category</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}{% if product %}{{ product.name }}{% else %}New product{% endif %}{% endblock %}
+{% block content %}
+<div style="max-width:640px;">
+<form method="post" novalidate>
+{% csrf_token %}
+<div class="card" style="margin-bottom:12px;">
+  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#111827;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eaecf0;">Product information</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div style="grid-column:1/-1;">
+      <label for="{{ form.name.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Product name <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.name }}{% if form.name.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.name.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+      <label for="{{ form.sku.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">SKU <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.sku }}{% if form.sku.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.sku.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+      <label for="{{ form.category.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Category</label>
+      {{ form.category }}
+    </div>
+    <div style="grid-column:1/-1;">
+      <label for="{{ form.description.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Description</label>
+      {{ form.description }}
+    </div>
+  </div>
+</div>
+<div class="card" style="margin-bottom:12px;">
+  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#111827;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eaecf0;">Pricing &amp; stock</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <label for="{{ form.cost_price.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Cost price ($) <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.cost_price }}{% if form.cost_price.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.cost_price.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+      <label for="{{ form.selling_price.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Selling price ($) <span style="color:#b91c1c;" aria-hidden="true">*</span></label>
+      {{ form.selling_price }}{% if form.selling_price.errors %}<p style="font-size:11.5px;color:#b91c1c;margin-top:4px;" role="alert">{{ form.selling_price.errors.0 }}</p>{% endif %}
+    </div>
+    <div>
+      <label for="{{ form.stock_quantity.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Initial stock quantity</label>
+      {{ form.stock_quantity }}
+    </div>
+    <div>
+      <label for="{{ form.reorder_threshold.id_for_label }}" style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;font-family:'Inter',sans-serif;">Manual reorder threshold</label>
+      {{ form.reorder_threshold }}
+    </div>
+  </div>
+  <div style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;">
+    {{ form.use_ai_threshold }}
+    <div>
+      <label for="{{ form.use_ai_threshold.id_for_label }}" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:700;color:#1e40af;cursor:pointer;">Use AI-adjusted threshold</label>
+      <p style="font-size:11px;color:#3b82f6;margin-top:2px;font-family:'Inter',sans-serif;">Automatically adjust based on sales velocity and trends</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:12px;background:#f9fafb;border:1px solid #eaecf0;border-radius:8px;">
+    {{ form.is_active }}
+    <label for="{{ form.is_active.id_for_label }}" style="font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;color:#374151;cursor:pointer;">Product is active</label>
+  </div>
+</div>
+<div style="display:flex;gap:8px;">
+  <button type="submit" class="btn btn-primary">{{ action }} product</button>
+  <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">Cancel</a>
+</div>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "layouts/base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block page_subtitle %}Inventory catalog{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+  <form method="get" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" role="search" aria-label="Filter products">
+    <div style="position:relative;">
+      <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#9ca3af;pointer-events:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="search" name="search" value="{{ search }}" placeholder="Name or SKU…" class="field" style="padding-left:28px;width:200px;" aria-label="Search products">
+    </div>
+    <select name="category" class="field" style="width:150px;" aria-label="Filter by category">
+      <option value="">All categories</option>
+      {% for cat in categories %}<option value="{{ cat.pk }}" {% if category_id == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+    </select>
+    <select name="status" class="field" style="width:130px;" aria-label="Filter by status">
+      <option value="">All status</option>
+      <option value="low" {% if status == 'low' %}selected{% endif %}>Low stock</option>
+      <option value="out" {% if status == 'out' %}selected{% endif %}>Out of stock</option>
+    </select>
+    <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+    {% if search or category_id or status %}<a href="{% url 'inventory:product_list' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+  </form>
+  {% if user.is_manager %}
+  <a href="{% url 'inventory:product_create' %}" class="btn btn-primary btn-sm">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    Add product
+  </a>
+  {% endif %}
+</div>
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="overflow-x:auto;">
+    <table class="tbl" aria-label="Product inventory">
+      <thead><tr>
+        <th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th>
+        <th scope="col" style="text-align:right;">Cost</th><th scope="col" style="text-align:right;">Price</th>
+        <th scope="col" style="text-align:right;">Stock</th><th scope="col" style="text-align:center;">Status</th>
+        {% if user.is_manager %}<th scope="col" style="text-align:center;">Actions</th>{% endif %}
+      </tr></thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td class="strong"><a href="{% url 'inventory:product_detail' product.pk %}" style="color:inherit;text-decoration:none;">{{ product.name }}</a></td>
+          <td class="mn">{{ product.sku }}</td>
+          <td>{{ product.category.name|default:"—" }}</td>
+          <td class="mn" style="text-align:right;">${{ product.cost_price }}</td>
+          <td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;color:#111827;">${{ product.selling_price }}</td>
+          <td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;{% if product.is_out_of_stock %}color:#b91c1c;{% elif product.is_low_stock %}color:#d97706;{% else %}color:#111827;{% endif %}">
+            {{ product.stock_quantity }}<span style="font-size:10.5px;color:#d1d5db;font-weight:400;"> / {{ product.effective_threshold }}</span>
+          </td>
+          <td style="text-align:center;">
+            {% if product.is_out_of_stock %}<span class="badge badge-red">Out of stock</span>
+            {% elif product.is_low_stock %}<span class="badge badge-amber">Low stock</span>
+            {% else %}<span class="badge badge-green">In stock</span>{% endif %}
+          </td>
+          {% if user.is_manager %}
+          <td style="text-align:center;">
+            <div style="display:flex;gap:4px;justify-content:center;" role="group" aria-label="Actions for {{ product.name }}">
+              <a href="{% url 'inventory:stock_adjust' product.pk %}" class="btn btn-ghost btn-sm" aria-label="Adjust stock for {{ product.name }}">Stock</a>
+              <a href="{% url 'inventory:product_edit' product.pk %}" class="btn btn-ghost btn-sm" aria-label="Edit {{ product.name }}">Edit</a>
+              <a href="{% url 'ai_engine:product_analysis' product.pk %}" style="padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;background:#eff6ff;color:#4F7CFF;border:none;text-decoration:none;" aria-label="AI analysis for {{ product.name }}">AI</a>
+              <a href="{% url 'inventory:product_delete' product.pk %}" class="btn btn-sm" style="background:#fff;color:#b91c1c;border:1px solid #fecaca;" aria-label="Delete {{ product.name }}">Del</a>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af;">No products found. {% if user.is_manager %}<a href="{% url 'inventory:product_create' %}" style="color:#4F7CFF;">Add one →</a>{% endif %}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if products.has_other_pages %}
+  <nav style="padding:10px 14px;border-top:1px solid #eaecf0;display:flex;justify-content:space-between;align-items:center;" aria-label="Pagination">
+    <p style="font-size:11.5px;color:#9ca3af;font-family:'Inter',sans-serif;">Page {{ products.number }} of {{ products.paginator.num_pages }}</p>
+    <div style="display:flex;gap:6px;">
+      {% if products.has_previous %}<a href="?page={{ products.previous_page_number }}&search={{ search }}&category={{ category_id }}&status={{ status }}" class="btn btn-secondary btn-sm">← Prev</a>{% endif %}
+      {% if products.has_next %}<a href="?page={{ products.next_page_number }}&search={{ search }}&category={{ category_id }}&status={{ status }}" class="btn btn-secondary btn-sm">Next →</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}
