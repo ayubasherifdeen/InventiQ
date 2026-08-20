@@ -1,10 +1,11 @@
 from pathlib import Path
 import os
 import dj_database_url
+import os
 
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-inventiq-change-in-production-xyz123')
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-inventiq-change-in-production-xyz123'
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -47,6 +48,7 @@ TEMPLATES = [{
 }]
 
 WSGI_APPLICATION = 'inventiq_project.wsgi.application'
+CSRF_TRUSTED_ORIGINS = ['https://inventiq-production.up.railway.app']
 
 DATABASES = {
     'default': dj_database_url.config(
