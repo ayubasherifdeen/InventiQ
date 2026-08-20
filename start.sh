@@ -8,6 +8,7 @@ pip install -q -r ../requirements.txt
 
 # Run Django migrations
 python manage.py migrate --noinput
+python manage.py seed_data
 
 # Collect static files
 python manage.py collectstatic --noinput
