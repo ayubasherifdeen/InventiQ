@@ -32,11 +32,16 @@ class User(AbstractUser):
 
 class ActivityLog(models.Model):
     ACTION_CHOICES = [
-        ('login', 'Login'), ('logout', 'Logout'),
-        ('sale_created', 'Sale Created'), ('product_added', 'Product Added'),
-        ('product_updated', 'Product Updated'), ('product_deleted', 'Product Deleted'),
-        ('stock_updated', 'Stock Updated'), ('user_created', 'User Created'),
+        ('login', 'Login'),
+        ('logout', 'Logout'),
+        ('sale_created', 'Sale Created'),
+        ('product_added', 'Product Added'),
+        ('product_updated', 'Product Updated'),
+        ('product_deleted', 'Product Deleted'),
+        ('stock_updated', 'Stock Updated'), 
+        ('user_created', 'User Created'),
         ('user_updated', 'User Updated'),
+        ('category_created', 'Category Created')
     ]
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action = models.CharField(max_length=50, choices=ACTION_CHOICES)

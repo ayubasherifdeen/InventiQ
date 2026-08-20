@@ -35,7 +35,8 @@ def process_sale(request):
                 product = Product.objects.select_for_update().get(pk=item_data['product_id'])
                 qty = int(item_data['quantity'])
                 if product.stock_quantity < qty:
-                    raise ValueError(f"Insufficient stock for {product.name}. Available: {product.stock_quantity}")
+                    raise ValueError(f"Insufficient stock for {product.name}."
+                                     f"Available: {product.stock_quantity}")
                 SaleItem.objects.create(
                     sale=sale, product=product, quantity=qty,
                     unit_price=product.selling_price, cost_price=product.cost_price,

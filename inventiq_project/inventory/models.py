@@ -71,7 +71,8 @@ class Product(models.Model):
 class StockAdjustment(models.Model):
     REASON_CHOICES = [
         ('restock', 'Restock'), ('damaged', 'Damaged/Removed'),
-        ('correction', 'Inventory Correction'), ('returned', 'Customer Return'), ('other', 'Other'),
+        ('correction', 'Inventory Correction'),
+        ('returned', 'Customer Return'), ('other', 'Other'),
     ]
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='adjustments')
     quantity_change = models.IntegerField()

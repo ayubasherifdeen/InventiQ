@@ -4,7 +4,9 @@ from decimal import Decimal
 
 
 class Sale(models.Model):
-    STATUS_CHOICES = [('completed', 'Completed'), ('voided', 'Voided')]
+    STATUS_CHOICES = [('completed', 'Completed'),
+                      ('voided', 'Voided'),
+    ]
     salesperson = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sales')
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))

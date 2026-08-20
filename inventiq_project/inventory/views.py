@@ -26,7 +26,14 @@ def product_list(request):
         products = [p for p in products if p.is_out_of_stock]
     categories = Category.objects.all()
     page = Paginator(products, 15).get_page(request.GET.get('page'))
-    return render(request, 'inventory/product_list.html', {'products': page, 'categories': categories, 'search': search, 'category_id': category_id, 'status': status})
+    return render(request, 'inventory/product_list.html', {
+        'products': page, 
+        'categories': categories, 
+        'search': search, 
+        'category_id': category_id, 
+        'status': status
+        }
+    )
 
 
 @login_required
@@ -102,7 +109,9 @@ def category_list(request):
     categories = Category.objects.all()
     form = CategoryForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        category = form.save(commit=False)
+        ActivityLog.objects.create(user=request.user, action='category_created', descriptions=f"New category, {category.name} created")
+        category.save()
         messages.success(request, 'Category created.')
         return redirect('inventory:category_list')
     return render(request, 'inventory/category_list.html', {'categories': categories, 'form': form})
