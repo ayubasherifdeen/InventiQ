@@ -48,7 +48,11 @@ TEMPLATES = [{
 }]
 
 WSGI_APPLICATION = 'inventiq_project.wsgi.application'
-CSRF_TRUSTED_ORIGINS = ['https://inventiq-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = [
+    'https://inventiq-production.up.railway.app',
+    'http://inventiq-production.up.railway.app',
+    'https://*.up.railway.app',
+]
 
 DATABASES = {
     'default': dj_database_url.config(
