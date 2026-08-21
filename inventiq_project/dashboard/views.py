@@ -9,6 +9,7 @@ from inventory.models import Product
 from sales.models import Sale, SaleItem
 from ai_engine.services import get_sales_over_time, get_top_products, run_full_ai_analysis
 import json, csv
+from django.db.models import F
 
 
 @login_required
@@ -35,21 +36,27 @@ def salesperson_dashboard(request):
 @login_required
 @manager_required
 def manager_dashboard(request):
-    period = request.GET.get('period', '30')
-    try:
-        days = int(period)
-    except ValueError:
-        days = 30
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
-    start = timezone.now() - timedelta(days=days)
-    sales_qs = Sale.objects.filter(created_at__gte=start, status='completed')
+    start = timezone.now() - timedelta(days=30)
+    end = timezone.now()
+    if start_date:
+        start = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
+    if end_date:
+        end = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
+    sales_qs = Sale.objects.filter(created_at__date__gte=start, created_at__date__lte=end, status='completed')
+    sales_with_profit = SaleItem.objects.filter(sale__in=sales_qs).annotate(profit=Sum((F('unit_price') - F('cost_price')) * F('quantity')))
+    total_profit = sales_with_profit.aggregate(total=Sum('profit'))['total'] or 0
     total_revenue = sales_qs.aggregate(t=Sum('total_amount'))['t'] or 0
+    
     total_sales = sales_qs.count()
     avg_sale = sales_qs.aggregate(a=Avg('total_amount'))['a'] or 0
 
     products = list(Product.objects.filter(is_active=True))
     low_stock = [p for p in products if p.is_low_stock]
-
+    days = (end - start).days or 1
+    period = f"{start.strftime('%Y-%m-%d')} to {end.strftime('%Y-%m-%d')}"
     chart_data = get_sales_over_time(days)
     top_products = get_top_products(limit=8, days=days)
     recent_sales = Sale.objects.select_related('salesperson').prefetch_related('items')[:8]
@@ -71,6 +78,7 @@ def manager_dashboard(request):
         'recent_sales': recent_sales,
         'alerts': alerts[:5],
         'top_salespeople': top_salespeople,
+        'total_profit': total_profit,
     })
 
 

@@ -11,10 +11,10 @@
       <div>{% if sale.status == 'completed' %}<span class="badge badge-green">Completed</span>{% else %}<span class="badge badge-red">Voided</span>{% endif %}</div>
     </div>
     <table class="tbl" style="width:100%;" aria-label="Items in this sale">
-      <thead><tr><th scope="col">Product</th><th scope="col" style="text-align:right;">Unit price</th><th scope="col" style="text-align:right;">Qty</th><th scope="col" style="text-align:right;">Subtotal</th></tr></thead>
+      <thead><tr><th scope="col" style="padding:14px;">Product</th><th scope="col" style="text-align:right; padding:14px;">Unit price</th><th scope="col" style="text-align:right; padding:14px;">Qty</th><th scope="col" style="text-align:right; padding:14px;">Subtotal</th></tr></thead>
       <tbody>
         {% for item in sale.items.all %}
-        <tr><td class="strong">{{ item.product.name }}</td><td class="mn" style="text-align:right;">${{ item.unit_price }}</td><td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;">{{ item.quantity }}</td><td class="money">${{ item.subtotal|floatformat:2 }}</td></tr>
+        <tr><td class="strong">{{ item.product.name }}</td><td class="mn" style="text-align:right;">${{ item.unit_price }}</td><td style="text-align:right;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600; padding:14px;">{{ item.quantity }}</td><td class="money">${{ item.subtotal|floatformat:2 }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
